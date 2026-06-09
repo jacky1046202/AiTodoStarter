@@ -1,5 +1,6 @@
 package tw.edu.example.aitodostarter.data
 
+// 抽象層。實作了 TodoRepository 介面，負責呼叫 DAO。
 class RoomTodoRepository(private val todoDao: TodoDao) : TodoRepository {
     override fun getTodos(): List<TodoItem> = todoDao.getAllTodos()
 

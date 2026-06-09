@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. 初始化 Room 資料庫與 Repository5
+        // 1. 初始化 Room 資料庫與 Repository
         val database = AppDatabase.getDatabase(applicationContext)
         val todoRepository = RoomTodoRepository(database.todoDao())
 

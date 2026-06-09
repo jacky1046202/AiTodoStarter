@@ -66,7 +66,7 @@ import tw.edu.example.aitodostarter.reminder.ReminderScheduler
 
 enum class AppPage { Todos, Settings }
 
-// 定義一組現代感的顏色
+// 自定義顏色
 private val LightColors = lightColorScheme(
     primary = Color(0xFF006A60),      // 深青綠
     onPrimary = Color(0xFFFFFFFF),
@@ -82,11 +82,13 @@ fun TodoApp(
     todoController: TodoController,
     reminderSettingsController: ReminderSettingsController,
 ) {
+    // 導入了 Material 3 規範。重構了色彩系統
     MaterialTheme(colorScheme = LightColors) {
         var page by remember { mutableStateOf(AppPage.Todos) }
         var todoState by remember { mutableStateOf(todoController.state) }
         var reminderSettingsState by remember { mutableStateOf(reminderSettingsController.state) }
 
+        // Compose 的基礎排版框架。它定義了 App 的骨架，包括上方的 TopAppBar 與右下角的 ExtendedFloatingActionButton (FAB)。
         Scaffold(
             topBar = {
                 when (page) {
@@ -298,7 +300,7 @@ fun ReminderSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally // 置中設計
     ) {
-        // 使用 Card 提升視覺層次感
+        // 提升reminder介面視覺層次感
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -356,11 +358,12 @@ fun TodoRow(
     onToggleClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit
 ) {
+    // 每個TODO的底層CARD
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp), // 讓 Card 之間有呼吸感
-        shape = RoundedCornerShape(16.dp), // 更圓潤的角，更有現代感
+        shape = RoundedCornerShape(12.dp), // 更圓潤的角，更有現代感
         colors = CardDefaults.cardColors(
             containerColor = if (todo.isDone)
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
