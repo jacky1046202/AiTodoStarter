@@ -37,6 +37,7 @@ dependencies {
 
     testImplementation(libs.junit)
     val room_version = "2.6.1"
+123
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 }

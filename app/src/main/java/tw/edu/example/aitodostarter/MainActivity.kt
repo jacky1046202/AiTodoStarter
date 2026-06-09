@@ -6,6 +6,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import tw.edu.example.aitodostarter.data.AppDatabase
 import tw.edu.example.aitodostarter.data.RoomTodoRepository
 import tw.edu.example.aitodostarter.data.SharedPreferencesReminderSettingsRepository
@@ -21,22 +24,33 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 1. 初始化 Room 資料庫與 Repository5
         val database = AppDatabase.getDatabase(applicationContext)
-        val todoController = TodoController(RoomTodoRepository(database.todoDao()))
-        val reminderScheduler = ReminderScheduler(applicationContext)
-        val reminderSettingsController = ReminderSettingsController(
-            repository = SharedPreferencesReminderSettingsRepository(applicationContext),
-            scheduler = reminderScheduler,
-        )
+        val todoRepository = RoomTodoRepository(database.todoDao())
 
+        // 2. 初始化 Reminder 相關服務
+        val reminderRepository = SharedPreferencesReminderSettingsRepository(applicationContext)
+        val reminderScheduler = ReminderScheduler(applicationContext)
+        val reminderController = ReminderSettingsController(reminderRepository, reminderScheduler)
+
+        // 3. 透過 ViewModelProvider 初始化 TodoController (防旋轉資料遺失)
+        val todoController by viewModels<TodoController> {
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return TodoController(todoRepository) as T
+                }
+            }
+        }
+
+        // 4. 建立通知頻道與請求權限 (把遺失的邏輯加回來)
         reminderScheduler.createNotificationChannel()
         requestNotificationPermissionIfNeeded()
-        reminderScheduler.scheduleDailyReminder(reminderSettingsController.state.settings)
 
         setContent {
             TodoApp(
                 todoController = todoController,
-                reminderSettingsController = reminderSettingsController,
+                reminderSettingsController = reminderController
             )
         }
     }
