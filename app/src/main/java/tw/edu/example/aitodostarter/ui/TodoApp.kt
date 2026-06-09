@@ -11,22 +11,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,6 +44,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -57,6 +66,15 @@ import tw.edu.example.aitodostarter.reminder.ReminderScheduler
 
 enum class AppPage { Todos, Settings }
 
+// 定義一組現代感的顏色
+private val LightColors = lightColorScheme(
+    primary = Color(0xFF006A60),      // 深青綠
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF68D3C3), // 淺青綠 (FAB 用)
+    onPrimaryContainer = Color(0xFF00201C),
+    surfaceVariant = Color(0xFFDAE5E1),   // 灰綠色 (Card 背景)
+    background = Color(0xFFF4FBF9),       // 極淺綠背景
+)
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +82,7 @@ fun TodoApp(
     todoController: TodoController,
     reminderSettingsController: ReminderSettingsController,
 ) {
-    MaterialTheme {
+    MaterialTheme(colorScheme = LightColors) {
         var page by remember { mutableStateOf(AppPage.Todos) }
         var todoState by remember { mutableStateOf(todoController.state) }
         var reminderSettingsState by remember { mutableStateOf(reminderSettingsController.state) }
@@ -79,15 +97,17 @@ fun TodoApp(
             // 【要求四】新增 FloatingActionButton 用來執行 Add
             floatingActionButton = {
                 if (page == AppPage.Todos) {
-                    FloatingActionButton(
+                    ExtendedFloatingActionButton(
+                        text = { Text("New Task") },
+                        icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                         onClick = {
                             todoController.addTodo()
                             todoState = todoController.state
                         },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add Todo")
-                    }
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = RoundedCornerShape(16.dp)
+                    )
                 }
             }
         ) { innerPadding ->
@@ -143,11 +163,20 @@ fun TodoApp(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoTopAppBar(onSettingsClick: () -> Unit) {
-    TopAppBar(
-        title = { Text("Todo List") },
+    // 改用 CenterAlignedTopAppBar 或 MediumTopAppBar 會更有質感
+    CenterAlignedTopAppBar(
+        title = {
+            Text(
+                "My Tasks",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+            )
+        },
         actions = {
             TodoAppMenu(onSettingsClick = onSettingsClick)
         },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
     )
 }
 
@@ -198,21 +227,34 @@ fun TodoScreen(
             Button(onClick = onSearchClick) {
                 Text("Search")
             }
+
         }
 
         HorizontalDivider()
 
         if (state.todos.isEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("No todos found")
+            Column(
+                modifier = Modifier.fillMaxSize().padding(top = 64.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(100.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "All caught up!",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.todos, key = { it.id }) { todo ->
-                    TodoRow(
-                        todo = todo,
-                        onToggleClick = onToggleClick,
-                        onDeleteClick = onDeleteClick // 傳遞給 TodoRow
-                    )
+                    TodoRow(todo = todo, onToggleClick = onToggleClick, onDeleteClick = onDeleteClick)
                 }
             }
         }
@@ -314,30 +356,44 @@ fun TodoRow(
     onToggleClick: (Int) -> Unit,
     onDeleteClick: (Int) -> Unit
 ) {
-    // 使用 Card 讓列表項目更好看
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp), // 讓 Card 之間有呼吸感
+        shape = RoundedCornerShape(16.dp), // 更圓潤的角，更有現代感
         colors = CardDefaults.cardColors(
-            containerColor = if (todo.isDone) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            else MaterialTheme.colorScheme.surface
+            containerColor = if (todo.isDone)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            else
+                MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // 使用系統提供的 Checkbox 增加互動感
+            Checkbox(
+                checked = todo.isDone,
+                onCheckedChange = { onToggleClick(todo.id) },
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Text(
                 modifier = Modifier.weight(1f),
                 text = todo.title,
-                textDecoration = if (todo.isDone) TextDecoration.LineThrough else null,
-                color = if (todo.isDone) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                else MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = if (todo.isDone) FontWeight.Normal else FontWeight.Medium,
+                    textDecoration = if (todo.isDone) TextDecoration.LineThrough else null
+                ),
+                color = if (todo.isDone) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface
             )
+
             TodoItemMenu(
                 isDone = todo.isDone,
                 onDoneClick = { onToggleClick(todo.id) },
